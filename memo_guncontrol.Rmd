@@ -4,27 +4,319 @@ author: "Michael Montella"
 date: "12/6/2018"
 output: html_document
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(readr)
+library(readxl)
+library(foreign)
+library(haven)
+library(magrittr)
+library(gridExtra)
+library(gtable)
+library(survey)
+library(scales)
+library(cowplot)
+library(kableExtra)
+library(dplyr)
+library(tidyverse)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+#loading Harvard Harris November Data into workspace
+hh <- read_csv("2018-11_Democratic-Congressional.csv")
 ```
 
-## Including Plots
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#hh gender question
+hh <- hh %>%
+  mutate(gender = ifelse(D1==2, "Women", "Men"))
+#table(hh$gender)
 
-You can also embed plots, for example:
+#hh race question (non-white, white)
+hh <- hh %>%
+  mutate(race = ifelse(QRACE==1, "White", "Non White"))
+#table(hh$race)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+#hh combined race and gender
+hh$race.gender <- with(hh, interaction(race, gender))
+#table(hh$race.gender)
+
+#hh question 11, response 1 - Do you support or oppose expanding background checks to all gun sales?
+table(hh$Q11r1)
+checks <- hh$Q11r1 
+hh <- hh %>%
+  mutate(checks = case_when(Q11r1==1 ~ "Strongly Support", Q11r1==2 ~ "Somewhat Support", Q11r1==3 ~ "Somewhat Oppose", Q11r1==4 ~ "Strongly Oppose", Q11r1==5 ~ "Don't Know/Unsure"))
+#table(hh$checks)
+
+#combined race/gender crossed w Q11r1
+background <- xtabs(~checks + race.gender, data=hh)
+background_1 <- prop.table(background, 2)
+background_2 <- round(background_1*100, digits=1)
+
+table1 <- kable(background_2, digits = 2, caption = "Do you support or oppose expanding background checks to all gun sales?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+table1
+#survey design and creating weighted summary tables - r1
+#nw.des <- svydesign(ids = ~1, weights = ~nweight, data = hh)
+#n.checks <- svyby(~checks, ~hh$gender+hh$race, design=nw.des, svymean)
+#checks.mean <- n.checks$checksDemocratic
+
+#hh question 11, response 2 - Do you support or oppose requiring gun owners to securely store firearms?
+table(hh$Q11r2)
+store <- hh$Q11r2 
+hh <- hh %>%
+  mutate(store = case_when(Q11r2==1 ~ "Strongly Support", Q11r2==2 ~ "Somewhat Support", Q11r2==3 ~ "Somewhat Oppose", Q11r2==4 ~ "Strongly Oppose", Q11r2==5 ~ "Don't Know/Unsure"))
+#table(hh$store)
+
+#combined race/gender crossed w Q11r2
+store_1 <- xtabs(~store + race.gender, data=hh)
+store_2 <- prop.table(store_1, 2)
+store_3 <- round(store_2*100, digits=1)
+
+table2 <- kable(store_3, digits = 2, caption = "Do you support or oppose requiring gun owners to securely store firearms?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+table2
+#survey design and creating weighted summary tables - r2
+#n.store <- svyby(~store, ~hh$gender+hh$race, design=nw.des, svymean)
+#store.mean <- n.store$storeDemocratic
+
+#hh question 11, response 3 - Do you support or oppose decreasing flow of guns through buyback programs and purchasing limits?
+table(hh$Q11r3)
+buy <- hh$Q11r3 
+hh <- hh %>%
+  mutate(buy = case_when(Q11r3==1 ~ "Strongly Support", Q11r3==2 ~ "Somewhat Support", Q11r3==3 ~ "Somewhat Oppose", Q11r3==4 ~ "Strongly Oppose", Q11r3==5 ~ "Don't Know/Unsure"))
+#table(hh$buy)
+
+#combined race/gender crossed w Q11r3
+buy_1 <- xtabs(~buy + race.gender, data=hh)
+buy_2 <- prop.table(buy_1, 2)
+buy_3 <- round(buy_2*100, digits=1)
+
+table3 <- kable(buy_3, digits = 2, caption = "Do you support or oppose decreasing flow of guns through buyback programs and purchasing limits?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+table3
+#survey design and creating weighted summary tables - r3
+#n.buy <- svyby(~buy, ~hh$gender+hh$race, design=nw.des, svymean)
+#buy.mean <- n.buy$buyDemocratic
+
+#hh question 11, response 4 - Do you support or oppose requiring licensing and training for gun ownership and usage?
+table(hh$Q11r4)
+train <- hh$Q11r4 
+hh <- hh %>%
+  mutate(train = case_when(Q11r4==1 ~ "Strongly Support", Q11r4==2 ~ "Somewhat Support", Q11r4==3 ~ "Somewhat Oppose", Q11r4==4 ~ "Strongly Oppose", Q11r4==5 ~ "Don't Know/Unsure"))
+#table(hh$train)
+
+#combined race/gender crossed w Q11r4
+train_1 <- xtabs(~train + race.gender, data=hh)
+train_2<- prop.table(train_1, 2)
+train_3 <- round(train_2*100, digits=1)
+
+table4 <- kable(train_3, digits = 2, caption = "Do you support or oppose requiring licensing and training for gun ownership and usage?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+table4
+#survey design and creating weighted summary tables - r4
+#n.train <- svyby(~train, ~hh$gender+hh$race, design=nw.des, svymean)
+#train.mean <- n.train$trainDemocratic
+
+#hh question 11, response 5 - Do you support or oppose banning assault weapons?
+table(hh$Q11r5)
+ban <- hh$Q11r5
+hh <- hh %>%
+  mutate(ban = case_when(Q11r5==1 ~ "Strongly Support", Q11r5==2 ~ "Somewhat Support", Q11r5==3 ~ "Somewhat Oppose", Q11r5==4 ~ "Strongly Oppose", Q11r5==5 ~ "Don't Know/Unsure"))
+#table(hh$ban)
+
+#combined race/gender crossed w Q11r5
+ban_1 <- xtabs(~ban + race.gender, data=hh)
+ban_2<- prop.table(ban_1, 2)
+ban_3 <- round(ban_2*100, digits=1)
+
+table5 <- kable(ban_3, digits = 2, caption = "Do you support or oppose banning assault weapons?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+table5
+#survey design and creating weighted summary tables - r5
+#n.ban <- svyby(~ban, ~hh$gender+hh$race, design=nw.des, svymean)
+#ban.mean <- n.ban$banDemocratic
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#Here starts the code for final graphic
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# hh question 11, response 1 - Do you support or oppose expanding background checks to all gun sales?
+# sorting just for men, looking at the percent of men who "Strongly Support"
+# column nweight is incorporated
+men_checks <- hh %>%
+# this line selects the initial variables we need to work forward
+  select(gender, Q11r1, nweight) %>%
+  filter(gender == "Men") %>%
+# this mutate line transforms numerical response values into response values that are more understandable for the # viewer 
+  mutate(Q11r1 = case_when(Q11r1==1 ~ "Strongly Support", Q11r1==2 ~ "Somewhat Support", Q11r1==3 ~ "Somewhat Oppose", Q11r1==4 ~ "Strongly Oppose", Q11r1==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r1) %>%
+# in order to use the count command without removing other columns and instead making a new column with the counts, # I group_by the variable I want to count and then run a mutate command on that variable
+# this adjustment was taken from: https://stackoverflow.com/questions/26784361/dplyr-put-count-occurrences-into-new-variable
+  mutate(count = n()) %>%
+  mutate(total = (27 + 26 + 52 + 354), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r1 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r1 = case_when(Q11r1 == "Strongly Support" ~ "checks"))
+
+#sorting just for women, looking at those who "Strongly Support"
+women_checks <- hh %>%
+  select(gender, Q11r1, nweight) %>%
+  filter(gender == "Women") %>%
+  mutate(Q11r1 = case_when(Q11r1==1 ~ "Strongly Support", Q11r1==2 ~ "Somewhat Support", Q11r1==3 ~ "Somewhat Oppose", Q11r1==4 ~ "Strongly Oppose", Q11r1==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r1) %>%
+  mutate(count = n()) %>%
+  mutate(total = (22 + 26 + 79 + 18 + 396), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r1 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r1 = case_when(Q11r1 == "Strongly Support" ~ "checks"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# hh question 11, response 2 - Do you support or oppose requiring gun owners to securely store firearms?
+
+# sorting just for men
+men_secure <- hh %>%
+  select(gender, Q11r2, nweight) %>%
+  filter(gender == "Men") %>%
+  mutate(Q11r2 = case_when(Q11r2==1 ~ "Strongly Support", Q11r2==2 ~ "Somewhat Support", Q11r2==3 ~ "Somewhat Oppose", Q11r2==4 ~ "Strongly Oppose", Q11r2==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r2) %>%
+  mutate(count = n()) %>%
+  mutate(total = (27 + 26 + 52 + 354), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r2 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r2 = case_when(Q11r2 == "Strongly Support" ~ "secure"))
+#sorting just for women, and combining "Somewhat support," and "Strongly support," to give us effectively the net support
+women_secure <- hh %>%
+  select(gender, Q11r2, nweight) %>%
+  filter(gender == "Women") %>%
+  mutate(Q11r2 = case_when(Q11r2==1 ~ "Strongly Support", Q11r2==2 ~ "Somewhat Support", Q11r2==3 ~ "Somewhat Oppose", Q11r2==4 ~ "Strongly Oppose", Q11r2==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r2) %>%
+  mutate(count = n()) %>%
+  mutate(total = (22 + 26 + 79 + 18 + 396), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r2 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r2 = case_when(Q11r2 == "Strongly Support" ~ "secure"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#hh question 11, response 3 - Do you support or oppose decreasing flow of guns through buyback programs and purchasing limits?
+#sorting just for men, and combining "Somewhat support," and "Strongly support," to give us effectively the net support
+men_decrease <- hh %>%
+  select(gender, Q11r3, nweight) %>%
+  filter(gender == "Men") %>%
+  mutate(Q11r3 = case_when(Q11r3==1 ~ "Strongly Support", Q11r3==2 ~ "Somewhat Support", Q11r3==3 ~ "Somewhat Oppose", Q11r3==4 ~ "Strongly Oppose", Q11r3==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r3) %>%
+  mutate(count = n()) %>%
+  mutate(total = (27 + 26 + 52 + 354), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r3 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r3 = case_when(Q11r3 == "Strongly Support" ~ "decrease"))
+#sorting just for women, and combining "Somewhat support," and "Strongly support," to give us effectively the net support
+women_decrease <- hh %>%
+  select(gender, Q11r3, nweight) %>%
+  filter(gender == "Women") %>%
+  mutate(Q11r3 = case_when(Q11r3==1 ~ "Strongly Support", Q11r3==2 ~ "Somewhat Support", Q11r3==3 ~ "Somewhat Oppose", Q11r3==4 ~ "Strongly Oppose", Q11r3==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r3) %>%
+  mutate(count = n()) %>%
+  mutate(total = (22 + 26 + 79 + 18 + 396), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r3 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r3 = case_when(Q11r3 == "Strongly Support" ~ "decrease"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#hh question 11, response 4 - Do you support or oppose requiring licensing and training for gun ownership and usage?
+#sorting just for men, and combining "Somewhat support," and "Strongly support," to give us effectively the net support
+men_license <- hh %>%
+  select(gender, Q11r4, nweight) %>%
+  filter(gender == "Men") %>%
+  mutate(Q11r4 = case_when(Q11r4==1 ~ "Strongly Support", Q11r4==2 ~ "Somewhat Support", Q11r4==3 ~ "Somewhat Oppose", Q11r4==4 ~ "Strongly Oppose", Q11r4==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r4) %>%
+  mutate(count = n()) %>%
+  mutate(total = (27 + 26 + 52 + 354), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r4 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r4 = case_when(Q11r4 == "Strongly Support" ~ "license"))
+#sorting just for women, and combining "Somewhat support," and "Strongly support," to give us effectively the net support
+women_license <- hh %>%
+  select(gender, Q11r4, nweight) %>%
+  filter(gender == "Women") %>%
+  mutate(Q11r4 = case_when(Q11r4==1 ~ "Strongly Support", Q11r4==2 ~ "Somewhat Support", Q11r4==3 ~ "Somewhat Oppose", Q11r4==4 ~ "Strongly Oppose", Q11r4==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r4) %>%
+  mutate(count = n()) %>%
+  mutate(total = (22 + 26 + 79 + 18 + 396), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r4 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r4 = case_when(Q11r4 == "Strongly Support" ~ "license"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#hh question 11, response 5 - Do you support or oppose banning assault weapons?
+#sorting just for men, and combining "Somewhat support," and "Strongly support," to give us effectively the net support
+men_ban <- hh %>%
+  select(gender, Q11r5, nweight) %>%
+  filter(gender == "Men") %>%
+  mutate(Q11r5 = case_when(Q11r5==1 ~ "Strongly Support", Q11r5==2 ~ "Somewhat Support", Q11r5==3 ~ "Somewhat Oppose", Q11r5==4 ~ "Strongly Oppose", Q11r5==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r5) %>%
+  mutate(count = n()) %>%
+  mutate(total = (27 + 26 + 52 + 354), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r5 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r5 = case_when(Q11r5 == "Strongly Support" ~ "ban"))
+#sorting just for women, and combining "Somewhat support," and "Strongly support," to give us effectively the net support
+women_ban <- hh %>%
+  select(gender, Q11r5, nweight) %>%
+  filter(gender == "Women") %>%
+  mutate(Q11r5 = case_when(Q11r5==1 ~ "Strongly Support", Q11r5==2 ~ "Somewhat Support", Q11r5==3 ~ "Somewhat Oppose", Q11r5==4 ~ "Strongly Oppose", Q11r5==5 ~ "Don't Know/Unsure")) %>%
+  rename(Gender = gender) %>%
+  group_by(Q11r5) %>%
+  mutate(count = n()) %>%
+  mutate(total = (22 + 26 + 79 + 18 + 396), sum = sum(nweight), final = sum/total) %>%
+  filter(Q11r5 == "Strongly Support") %>%
+  select(Gender, final) %>%
+  ungroup() %>%
+  mutate(Q11r5 = case_when(Q11r5 == "Strongly Support" ~ "ban"))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+checks_2 <- rbind(men_checks, women_checks) %>%
+  rename(question = Q11r1)
+secure_2 <- rbind(men_secure, women_secure) %>%
+  rename(question = Q11r2)
+decrease_2 <- rbind(men_decrease, women_decrease) %>%
+  rename(question = Q11r3)
+license_2 <- rbind(men_license, women_license) %>%
+  rename(question = Q11r4)
+ban_2 <- rbind(men_ban, women_ban) %>%
+  rename(question = Q11r5)
+
+all_gun <- bind_rows(checks_2, secure_2, decrease_2, license_2, ban_2, .id = "Question") %>%
+  select(question, Gender, final) %>%
+  mutate(Yes = final*100, yEs = round(Yes, digits = 0)) %>%
+  select(question, Gender, yEs) %>%
+  rename(prop = yEs)
+
+graphic_labels <- c("Do you support or oppose requiring gun owners \nto securely store firearms?", "Do you support or oppose requiring \nlicensing and training for gun ownership and usage?", "Do you support or oppose decreasing flow of guns \nthrough buyback programs and purchasing limits?", "Do you support or oppose expanding \nbackground checks to all gun sales?", "Do you support or oppose \nbanning assault weapons?")
+  
+graph <- ggplot(all_gun, aes(x = question, y = prop, fill = Gender)) + geom_bar(stat = "identity", width = 0.4, position = "dodge") + coord_flip() + scale_x_discrete(labels = graphic_labels) + labs(title = "Gender Divide on Gun Control", caption = "Proportion of women who support a given \ngun control measure is on average 12.4 percent greater \nthan men's support for the same measure") + ylab("Proportion of Respondents That Either \nSomewhat Support or Strongly Support") + xlab("Gun Control Measure") + scale_fill_manual(name = "Gender", values = c("#a9cce3", "#f5b7b1")) + theme(text = element_text(family = "Times New Roman", size = 14), panel.background = element_blank()) + geom_text(aes(y = prop + 0.90, label = paste0(prop, "%")), size = 3, position = position_dodge(width = 0.4), inherit.aes = TRUE, family = "Times New Roman")
+```
