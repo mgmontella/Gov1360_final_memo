@@ -57,7 +57,7 @@ background_1 <- prop.table(background, 2)
 background_2 <- round(background_1*100, digits=1)
 
 table1 <- kable(background_2, digits = 2, caption = "Do you support or oppose expanding background checks to all gun sales?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left") 
 table1
 #survey design and creating weighted summary tables - r1
 #nw.des <- svydesign(ids = ~1, weights = ~nweight, data = hh)
@@ -77,7 +77,7 @@ store_2 <- prop.table(store_1, 2)
 store_3 <- round(store_2*100, digits=1)
 
 table2 <- kable(store_3, digits = 2, caption = "Do you support or oppose requiring gun owners to securely store firearms?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left") 
 table2
 #survey design and creating weighted summary tables - r2
 #n.store <- svyby(~store, ~hh$gender+hh$race, design=nw.des, svymean)
@@ -96,7 +96,7 @@ buy_2 <- prop.table(buy_1, 2)
 buy_3 <- round(buy_2*100, digits=1)
 
 table3 <- kable(buy_3, digits = 2, caption = "Do you support or oppose decreasing flow of guns through buyback programs and purchasing limits?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left") 
 table3
 #survey design and creating weighted summary tables - r3
 #n.buy <- svyby(~buy, ~hh$gender+hh$race, design=nw.des, svymean)
@@ -115,7 +115,7 @@ train_2<- prop.table(train_1, 2)
 train_3 <- round(train_2*100, digits=1)
 
 table4 <- kable(train_3, digits = 2, caption = "Do you support or oppose requiring licensing and training for gun ownership and usage?", col.names = c("Non-white Men", "White Men", "Non-white women", "White Women")) %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left") 
 table4
 #survey design and creating weighted summary tables - r4
 #n.train <- svyby(~train, ~hh$gender+hh$race, design=nw.des, svymean)
